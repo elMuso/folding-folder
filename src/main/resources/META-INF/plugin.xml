@@ -1,0 +1,74 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.collapser.collapser</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Collapser</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+
+    <description><![CDATA[
+      This plugin is very helpful in Android Development.<br>
+      It can display your files as a group of different folders only in project structure view.
+      <b>Note:</b> files will not be physically moved to folders.<br>
+      <br>
+      Before decompose.<br>
+      <pre>
+      res/
+        layout/
+          chat_activity.xml
+          chat_toolbar.xml
+          chat_item.xml
+          chat_share_view.xml
+          home_activity.xml
+          home_toolbar.xml
+          home_fragment_sign_in.xml
+          home_fragment_sign_up.xml
+      </pre>
+      <br>
+      After decompose.<br>
+      <pre>
+      res/
+        layout/
+          chat/
+            chat_activity.xml
+            chat_toolbar.xml
+            chat_item.xml
+            chat_share_view.xml
+          home/
+            home_activity.xml
+            home_toolbar.xml
+            home_fragment_sign_in.xml
+            home_fragment_sign_up.xml
+      </pre>
+      <br>
+      Naming rules: folder name -> file name part till underscore<br>
+      <br>
+      <b>Note</b> The Android project view defines its own structure and does not allow modifying the structure through any extensions.<br>
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <treeStructureProvider implementation="com.collapser.collapser.ProjectStructureProvider"/>
+        <applicationConfigurable instance="com.collapser.collapser.SettingConfigurable"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+        <action id="ComposeAction" class="com.collapser.collapser.ComposeAction">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
