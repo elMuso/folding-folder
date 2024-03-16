@@ -55,7 +55,7 @@ public class DirectoryNode extends ProjectViewNode<PsiFile> {
                 PsiFile psiFile = (PsiFile) fileNode.getValue();
                 final ViewSettings settings = ((PsiFileNode) fileNode).getSettings();
                 String shortName = psiFile.getName().substring(mName.length());
-                final int beginIndex = shortName.indexOf(ProjectStructureProvider.COMPOSE_BY_CHAR);
+                final int beginIndex = shortName.indexOf("_");
                 if (beginIndex != -1) {
                     shortName = shortName.substring(beginIndex + 1);
                 }

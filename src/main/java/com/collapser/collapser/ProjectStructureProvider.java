@@ -6,19 +6,15 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ProjectStructureProvider implements com.intellij.ide.projectView.TreeStructureProvider {
-
-    public static final char COMPOSE_BY_CHAR = '_';
 
     @Nullable
     @Override
@@ -49,91 +45,54 @@ public class ProjectStructureProvider implements com.intellij.ide.projectView.Tr
         List<AbstractTreeNode<?>> resultList = new ArrayList<>();
         Project project = Utils.getCurrentProject();
         if (project != null) {
-            HashSet<String> composedDirNameSet = new HashSet<>();
+            Map<String,ArrayList<AbstractTreeNode<?>>> folders = new LinkedHashMap<>();
             List<AbstractTreeNode<?>> notComposedFileNodes = new ArrayList<>();
 
-            final boolean customPrefix = PropertiesComponent.getInstance().getBoolean(SettingConfigurable.PREFIX_CUSTOM_USE, false);
 
-            Pattern pattern = customPrefix ? Pattern.compile(PropertiesComponent.getInstance().getValue(SettingConfigurable.PREFIX_PATTERN, SettingConfigurable.DEFAULT_PATTERN)) : null;
+            Pattern pattern = Pattern.compile(                    PropertiesComponent.getInstance().getValue(SettingConfigurable.PREFIX_PATTERN, SettingConfigurable.DEFAULT_PATTERN)            );
 
             for (AbstractTreeNode<?> fileNode : fileNodes) {
                 if (fileNode.getValue() instanceof PsiFile psiFile) {
                     String fileName = psiFile.getName();
-                    if (customPrefix) {
                         Matcher m = pattern.matcher(fileName);
                         if (m.find()) {
                             String composedDirName = m.group(0);
-                            composedDirNameSet.add(composedDirName);
+                            if(!folders.containsKey(composedDirName)){
+                                folders.put(composedDirName,new ArrayList<>());
+                            }
+                            folders.get(composedDirName).add(fileNode);
                         } else {
                             notComposedFileNodes.add(fileNode);
                         }
-                    } else {
-                        int endIndex = fileName.indexOf(COMPOSE_BY_CHAR);
-                        if (endIndex != -1) {
-                            System.out.println(endIndex);
-                            String composedDirName = fileName.substring(0, endIndex);
-                            composedDirNameSet.add(composedDirName);
-                        } else {
-                            notComposedFileNodes.add(fileNode);
-                        }
-                    }
                 }else{
                     notComposedFileNodes.add(fileNode);
                 }
             }
             resultList.addAll(notComposedFileNodes);
-            for (String composedDirName : composedDirNameSet) {
-                List<AbstractTreeNode<?>> composedFileNodes = filterByDirName(fileNodes, composedDirName);
-                PsiFile psiFile = (PsiFile) composedFileNodes.get(0).getValue();
-                DirectoryNode composedDirNode = new DirectoryNode(project, viewSettings, psiFile, composedDirName);
-                composedDirNode.addAllChildren(composedFileNodes);
-                resultList.add(composedDirNode);
-            }
+            List<String> keys = new ArrayList<>(folders.keySet());
 
-//            if (!notComposedFileNodes.isEmpty()) {
-//                PsiFile psiFile = (PsiFile) notComposedFileNodes.get(0).getValue();
-//                DirectoryNode composedDirNode = new DirectoryNode(project, viewSettings, psiFile, OTHER_NODE);
-//                composedDirNode.addAllChildren(notComposedFileNodes);
-//                resultList.add(composedDirNode);
-//            }
-        }
-        return resultList;
-    }
+            for (int i = 0; i < folders.size(); i++) {
+                String name =keys.get(i);
+                List<AbstractTreeNode<?>> values = folders.get(name);
 
-    @NotNull
-    private List<AbstractTreeNode<?>> filterByDirName(Collection<AbstractTreeNode<?>> fileNodes, String token) {
-        List<AbstractTreeNode<?>> resultList = new ArrayList<>();
+                if(values.size()>1){
 
-        final boolean customPrefix = PropertiesComponent.getInstance().getBoolean(SettingConfigurable.PREFIX_CUSTOM_USE, false);
-
-        Pattern pattern = customPrefix ? Pattern.compile(PropertiesComponent.getInstance().getValue(SettingConfigurable.PREFIX_PATTERN, SettingConfigurable.DEFAULT_PATTERN)) : null;
-
-        for (AbstractTreeNode<?> fileNode : fileNodes) {
-            if (fileNode.getValue() instanceof PsiFile psiFile) {
-                String fileName = psiFile.getName();
-
-                if (customPrefix) {
-                    Matcher m = pattern.matcher(fileName);
-                    if (m.find()) {
-
-                        String composedDirName = m.group(0);
-                        if (composedDirName.equals(token)) {
-                            resultList.add(fileNode);
-                        }
+                    PsiFile psiFile = (PsiFile) values.get(0).getValue();
+                    try {
+                        psiFile = PsiFileFactory.getInstance(project).createFileFromText(".java", "");
+                    } catch (Throwable ignored) {
                     }
-                } else {
 
-                    int endIndex = fileName.indexOf(COMPOSE_BY_CHAR);
-                    if (endIndex != -1) {
-                        String composedDirName = fileName.substring(0, endIndex);
-                        if (composedDirName.equals(token)) {
-                            resultList.add(fileNode);
-                        }
-                    }
+                    DirectoryNode composedDirNode = new DirectoryNode(project, viewSettings, psiFile, name);
+                    composedDirNode.addAllChildren(values);
+                    resultList.add(composedDirNode);
+
+                }else if(values.size()==1){
+                    resultList.add(values.get(0));
                 }
+
             }
         }
-
         return resultList;
     }
 }

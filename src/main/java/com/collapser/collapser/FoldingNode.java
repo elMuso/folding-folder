@@ -19,7 +19,7 @@ class FoldingNode extends PsiFileNode {
     @Override
     protected void updateImpl(@NotNull PresentationData presentationData) {
         super.updateImpl(presentationData);
-
         presentationData.setPresentableText(mName);
     }
+
 }

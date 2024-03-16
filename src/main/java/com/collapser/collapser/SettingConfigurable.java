@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.event.ActionEvent;
 
 /**
  *
@@ -18,15 +17,13 @@ import java.awt.event.ActionEvent;
  */
 public class SettingConfigurable implements Configurable {
     public static final String PREFIX_PATTERN = "folding_plugin_prefix_pattern";
-    public static final String PREFIX_CUSTOM_USE = "folding_plugin_prefix_custom_use";
     public static final String PREFIX_HIDE = "folding_plugin_prefix_hide";
     public static final String PREFIX_GLOBAL = "folding_plugin_global_mode";
 
-    public static final String DEFAULT_PATTERN = "[^_]{1,}(?=_)";
-    public static final String DEFAULT_PATTERN_DOUBLE = "[^_]{1,}_[^_]{1,}(?=_)";
+    public static final String DEFAULT_PATTERN = "^.[A-Za-z0-9]*?(?=_|([A-Z]|\\.))";
+    public static final String DEFAULT_PATTERN_DOUBLE = "^.[A-Za-z0-9]*?(?=_|([A-Z]|\\.))";
 
     private JPanel mPanel;
-    private JCheckBox useCustomPatternCheckBox;
     private JTextField customPattern;
     private JCheckBox hideFoldingPrefix;
     private JCheckBox globalMode;
@@ -47,13 +44,6 @@ public class SettingConfigurable implements Configurable {
     @Nullable
     @Override
     public JComponent createComponent() {
-
-        useCustomPatternCheckBox.addActionListener(actionEvent -> {
-            boolean selected = getCheckBoxStatus(actionEvent);
-
-            customPattern.setEnabled(selected);
-            isModified = true;
-        });
 
         customPattern.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -79,11 +69,6 @@ public class SettingConfigurable implements Configurable {
         return mPanel;
     }
 
-    private boolean getCheckBoxStatus(ActionEvent actionEvent) {
-        AbstractButton abstractButton = (AbstractButton) actionEvent.getSource();
-        return abstractButton.getModel().isSelected();
-    }
-
 
     @Override
     public boolean isModified() {
@@ -93,7 +78,6 @@ public class SettingConfigurable implements Configurable {
 
     @Override
     public void apply() {
-        PropertiesComponent.getInstance().setValue(PREFIX_CUSTOM_USE, Boolean.valueOf(useCustomPatternCheckBox.isSelected()).toString());
         PropertiesComponent.getInstance().setValue(PREFIX_PATTERN, customPattern.getText());
         PropertiesComponent.getInstance().setValue(PREFIX_HIDE, Boolean.valueOf(hideFoldingPrefix.isSelected()).toString());
         PropertiesComponent.getInstance().setValue(PREFIX_GLOBAL, Boolean.valueOf(globalMode.isSelected()).toString());
@@ -111,9 +95,7 @@ public class SettingConfigurable implements Configurable {
 
     @Override
     public void reset() {
-        final boolean customPrefix = PropertiesComponent.getInstance().getBoolean(PREFIX_CUSTOM_USE, false);
-        useCustomPatternCheckBox.setSelected(customPrefix);
-        customPattern.setEnabled(customPrefix);
+        customPattern.setEnabled(true);
         customPattern.setText(PropertiesComponent.getInstance().getValue(PREFIX_PATTERN, DEFAULT_PATTERN_DOUBLE));
         hideFoldingPrefix.getModel().setSelected(PropertiesComponent.getInstance().getBoolean(PREFIX_HIDE, false));
         globalMode.getModel().setSelected(PropertiesComponent.getInstance().getBoolean(PREFIX_GLOBAL, false));
